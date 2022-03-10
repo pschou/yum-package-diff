@@ -54,7 +54,7 @@ type Metadata struct {
 	Text        string    `xml:",chardata"`
 	Xmlns       string    `xml:"xmlns,attr"`
 	Rpm         string    `xml:"rpm,attr"`
-	Packages    string    `xml:"packages,attr"`
+	Packages    int       `xml:"packages,attr"`
 	PackageList []Package `xml:"package"`
 }
 
@@ -102,7 +102,7 @@ func readFile(fileName string) []Package {
 	if len(dat.PackageList) == 0 {
 		log.Fatal("No packages found")
 	}
-	if fmt.Sprintf("%d", len(dat.PackageList)) != dat.Packages {
+	if len(dat.PackageList) != dat.Packages {
 		log.Fatal("XML Packages count does not match the number of Packages")
 	}
 	return dat.PackageList
