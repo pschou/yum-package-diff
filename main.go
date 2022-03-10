@@ -50,9 +50,6 @@ func main() {
 		out = f
 	}
 
-	fmt.Fprintln(out, "# Yum-diff matchup, version:", version)
-	fmt.Fprintln(out, "# new:", *newFile, "old:", *oldFile)
-
 	// initialized with zeros
 	newInOld := make([]int8, len(newPackages))
 	oldInNew := make([]int8, len(oldPackages))
@@ -72,6 +69,9 @@ matchups:
 			}
 		}
 	}
+
+	fmt.Fprintln(out, "# Yum-diff matchup, version:", version)
+	fmt.Fprintln(out, "# new:", *newFile, "old:", *oldFile)
 
 	if *showNew {
 		for iNew, pNew := range newPackages {

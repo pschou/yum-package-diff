@@ -6,7 +6,7 @@ shim is to be able to generate a file list for downloading.
 
 # Example usage:
 ```bash
-./yum-diff -new primary.xml.gz -old test.xml -showAdded -output list.txt
+./yum-package-diff -new primary.xml.gz -old test.xml -showAdded -output list.txt
 ```
 
 and the output looks like:
