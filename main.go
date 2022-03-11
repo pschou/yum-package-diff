@@ -19,10 +19,12 @@ import (
 	"io"
 	"log"
 	"os"
-	//"reflect"
+	"path"
+	"strings"
 )
 
 var version = "test"
+var repoPath string
 
 // HelloGet is an HTTP Cloud Function.
 func main() {
@@ -33,6 +35,7 @@ func main() {
 
 	var newFile = flag.String("new", "NewPrimary.xml.gz", "Package list for comparison")
 	var oldFile = flag.String("old", "OldPrimary.xml.gz", "Package list for comparison")
+	var inRepoPath = flag.String("repo", "/7/os/x86_64", "Repo path to use in file list")
 	var outputFile = flag.String("output", "-", "Output for comparison result")
 	var showNew = flag.Bool("showAdded", false, "Display packages only in the new list")
 	var showOld = flag.Bool("showRemoved", false, "Display packages only in the old list")
@@ -41,6 +44,7 @@ func main() {
 
 	newPackages := readFile(*newFile)
 	oldPackages := readFile(*oldFile)
+	repoPath = strings.TrimSuffix(strings.TrimPrefix(*inRepoPath, "/"), "/")
 
 	out := os.Stdout
 	if *outputFile != "-" {
@@ -99,7 +103,7 @@ matchups:
 }
 
 func printPackage(out io.Writer, p Package) {
-	fmt.Fprintf(out, "{%s}%s %s %s\n", p.Checksum.Type, p.Checksum.Text, p.Size.Package, p.Location.Href)
+	fmt.Fprintf(out, "{%s}%s %s %s\n", p.Checksum.Type, p.Checksum.Text, p.Size.Package, path.Join(repoPath, p.Location.Href))
 }
 
 func check(e error) {
