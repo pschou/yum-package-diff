@@ -56,8 +56,8 @@ func main() {
 	}
 
 	// initialized with zeros
-	newInOld := make([]int8, len(newPackages))
-	oldInNew := make([]int8, len(oldPackages))
+	newMatched := make([]int8, len(newPackages))
+	oldMatched := make([]int8, len(oldPackages))
 
 	log.Println("doing matchups")
 matchups:
@@ -68,8 +68,8 @@ matchups:
 				pNew.Checksum.Type == pOld.Checksum.Type &&
 				pNew.Size.Package == pOld.Size.Package &&
 				pNew.Location.Href == pOld.Location.Href {
-				newInOld[iNew] = 1
-				oldInNew[iOld] = 1
+				newMatched[iNew] = 1
+				oldMatched[iOld] = 1
 				continue matchups
 			}
 		}
@@ -80,7 +80,8 @@ matchups:
 
 	if *showNew {
 		for iNew, pNew := range newPackages {
-			if newInOld[iNew] == 0 {
+			if newMatched[iNew] == 0 {
+				// This package was not seen in OLD
 				printPackage(out, pNew)
 			}
 		}
@@ -88,7 +89,8 @@ matchups:
 
 	if *showCommon {
 		for iNew, pNew := range newPackages {
-			if newInOld[iNew] == 1 {
+			if newMatched[iNew] == 1 {
+				// This package was seen in BOTH
 				printPackage(out, pNew)
 			}
 		}
@@ -96,7 +98,8 @@ matchups:
 
 	if *showOld {
 		for iOld, pOld := range oldPackages {
-			if oldInNew[iOld] == 0 {
+			if oldMatched[iOld] == 0 {
+				// This package was not seen in NEW
 				printPackage(out, pOld)
 			}
 		}
