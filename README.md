@@ -29,6 +29,8 @@ Usage: ./yum-package-diff [options...]
         Package list for comparison (default "OldPrimary.xml.gz")
   -output string
         Output for comparison result (default "-")
+  -repo string
+        Repo path to use in file list (default "/7/os/x86_64")
   -showAdded
         Display packages only in the new list
   -showCommon
