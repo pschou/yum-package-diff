@@ -34,8 +34,8 @@ func main() {
 		flag.PrintDefaults()
 	}
 
-	var newFile = flag.String("new", "NewPrimary.xml.gz", "Package list for comparison")
-	var oldFile = flag.String("old", "OldPrimary.xml.gz", "Package list for comparison")
+	var newFile = flag.String("new", "NewPrimary.xml.gz", "The newer Package.xml file or repodata/ dir for comparison")
+	var oldFile = flag.String("old", "OldPrimary.xml.gz", "The older Package.xml file or repodata/ dir for comparison")
 	var inRepoPath = flag.String("repo", "/7/os/x86_64", "Repo path to use in file list")
 	var outputFile = flag.String("output", "-", "Output for comparison result")
 	var showNew = flag.Bool("showAdded", false, "Display packages only in the new list")
@@ -43,8 +43,29 @@ func main() {
 	var showCommon = flag.Bool("showCommon", false, "Display packages in both the new and old lists")
 	flag.Parse()
 
-	newPackages := readFile(*newFile)
-	oldPackages := readFile(*oldFile)
+	var newPackages, oldPackages []Package
+	if isDirectory(*newFile) {
+		newRepomd := readRepomdFile(path.Join(*newFile, "repomd.xml"))
+		for _, d := range newRepomd.Data {
+			if d.Type == "primary" {
+				_, f := path.Split(d.Location.Href)
+				newPackages = readFile(path.Join(*newFile, f))
+			}
+		}
+	} else {
+		newPackages = readFile(*newFile)
+	}
+	if isDirectory(*oldFile) {
+		oldRepomd := readRepomdFile(path.Join(*oldFile, "repomd.xml"))
+		for _, d := range oldRepomd.Data {
+			if d.Type == "primary" {
+				_, f := path.Split(d.Location.Href)
+				oldPackages = readFile(path.Join(*oldFile, f))
+			}
+		}
+	} else {
+		oldPackages = readFile(*oldFile)
+	}
 	repoPath = strings.TrimSuffix(strings.TrimPrefix(*inRepoPath, "/"), "/")
 
 	out := os.Stdout
@@ -115,4 +136,14 @@ func check(e error) {
 		//panic(e)
 		log.Fatal(e)
 	}
+}
+
+// isDirectory determines if a file represented
+// by `path` is a directory or not
+func isDirectory(path string) bool {
+	fileInfo, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+	return fileInfo.IsDir()
 }
