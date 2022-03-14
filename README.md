@@ -5,8 +5,15 @@ determining the files which have shown up or changed.  The intended purpose of t
 shim is to be able to generate a file list for downloading.
 
 # Example usage:
+
+Using two package.xml files
 ```bash
 ./yum-package-diff -new NewPrimary.xml.gz -old OldPrimary.xml -showAdded -output filelist.txt
+```
+
+Using two repo directories
+```bash
+./yum-package-diff -new output/ -old OldPrimary.xml -showAdded -output filelist.txt
 ```
 
 and the output looks like:
