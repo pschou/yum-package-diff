@@ -40,9 +40,9 @@ Yum Package Diff,  Version: 0.1.20220310.1123
 Usage: ./yum-package-diff [options...]
 
   -new string
-        Package list for comparison (default "NewPrimary.xml.gz")
+        The newer Package.xml file or repodata/ dir for comparison (default "NewPrimary.xml.gz")
   -old string
-        Package list for comparison (default "OldPrimary.xml.gz")
+        The older Package.xml file or repodata/ dir for comparison (default "OldPrimary.xml.gz")
   -output string
         Output for comparison result (default "-")
   -repo string
