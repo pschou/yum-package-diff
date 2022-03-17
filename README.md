@@ -11,9 +11,14 @@ Using two package.xml files
 ./yum-package-diff -new NewPrimary.xml.gz -old OldPrimary.xml -showAdded -output filelist.txt
 ```
 
-Using two repo directories
+Using one repo directory and one file
 ```bash
 ./yum-package-diff -new output/ -old OldPrimary.xml -showAdded -output filelist.txt
+```
+
+Using just a new file, this gives you a full list
+```bash
+./yum-package-diff -new output/ -old "" -showAdded -output filelist.txt
 ```
 
 and the output looks like:

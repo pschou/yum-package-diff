@@ -43,28 +43,33 @@ func main() {
 	var showCommon = flag.Bool("showCommon", false, "Display packages in both the new and old lists")
 	flag.Parse()
 
-	var newPackages, oldPackages []Package
-	if isDirectory(*newFile) {
-		newRepomd := readRepomdFile(path.Join(*newFile, "repomd.xml"))
-		for _, d := range newRepomd.Data {
-			if d.Type == "primary" {
-				_, f := path.Split(d.Location.Href)
-				newPackages = readFile(path.Join(*newFile, f))
+	var newPackages = []Package{}
+	var oldPackages = []Package{}
+	if _, isdir := isDirectory(*newFile); *newFile != "" {
+		if isdir {
+			newRepomd := readRepomdFile(path.Join(*newFile, "repomd.xml"))
+			for _, d := range newRepomd.Data {
+				if d.Type == "primary" {
+					_, f := path.Split(d.Location.Href)
+					newPackages = readFile(path.Join(*newFile, f))
+				}
 			}
+		} else {
+			newPackages = readFile(*newFile)
 		}
-	} else {
-		newPackages = readFile(*newFile)
 	}
-	if isDirectory(*oldFile) {
-		oldRepomd := readRepomdFile(path.Join(*oldFile, "repomd.xml"))
-		for _, d := range oldRepomd.Data {
-			if d.Type == "primary" {
-				_, f := path.Split(d.Location.Href)
-				oldPackages = readFile(path.Join(*oldFile, f))
+	if _, isdir := isDirectory(*oldFile); *oldFile != "" {
+		if isdir {
+			oldRepomd := readRepomdFile(path.Join(*oldFile, "repomd.xml"))
+			for _, d := range oldRepomd.Data {
+				if d.Type == "primary" {
+					_, f := path.Split(d.Location.Href)
+					oldPackages = readFile(path.Join(*oldFile, f))
+				}
 			}
+		} else {
+			oldPackages = readFile(*oldFile)
 		}
-	} else {
-		oldPackages = readFile(*oldFile)
 	}
 	repoPath = strings.TrimSuffix(strings.TrimPrefix(*inRepoPath, "/"), "/")
 
@@ -140,10 +145,10 @@ func check(e error) {
 
 // isDirectory determines if a file represented
 // by `path` is a directory or not
-func isDirectory(path string) bool {
+func isDirectory(path string) (exist bool, isdir bool) {
 	fileInfo, err := os.Stat(path)
 	if err != nil {
-		return false
+		return false, false
 	}
-	return fileInfo.IsDir()
+	return true, fileInfo.IsDir()
 }
