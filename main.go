@@ -17,10 +17,12 @@ package main
 import (
 	"flag"
 	"fmt"
+	humanize "github.com/dustin/go-humanize"
 	"io"
 	"log"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 )
 
@@ -104,6 +106,31 @@ matchups:
 	fmt.Fprintln(out, "# Yum-diff matchup, version:", version)
 	fmt.Fprintln(out, "# new:", *newFile, "old:", *oldFile)
 
+	var totalSize uint64
+	if *showNew {
+		for iNew, v := range newPackages {
+			if newMatched[iNew] == 0 {
+				totalSize += atoi(v.Size.Package)
+			}
+		}
+	}
+	if *showCommon {
+		for iNew, v := range newPackages {
+			if newMatched[iNew] == 1 {
+				totalSize += atoi(v.Size.Package)
+			}
+		}
+	}
+	if *showOld {
+		for iOld, v := range oldPackages {
+			if oldMatched[iOld] == 0 {
+				totalSize += atoi(v.Size.Package)
+			}
+		}
+	}
+
+	fmt.Fprintln(out, "# filelist size:", humanize.Bytes(totalSize))
+
 	if *showNew {
 		for iNew, pNew := range newPackages {
 			if newMatched[iNew] == 0 {
@@ -134,6 +161,11 @@ matchups:
 
 func printPackage(out io.Writer, p Package) {
 	fmt.Fprintf(out, "{%s}%s %s %s\n", p.Checksum.Type, p.Checksum.Text, p.Size.Package, path.Join(repoPath, p.Location.Href))
+}
+
+func atoi(str string) uint64 {
+	i, _ := strconv.Atoi(str)
+	return uint64(i)
 }
 
 func check(e error) {
