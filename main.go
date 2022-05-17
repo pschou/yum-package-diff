@@ -17,13 +17,14 @@ package main
 import (
 	"flag"
 	"fmt"
-	humanize "github.com/dustin/go-humanize"
 	"io"
 	"log"
 	"os"
 	"path"
 	"strconv"
 	"strings"
+
+	humanize "github.com/dustin/go-humanize"
 )
 
 var version = "test"
@@ -41,6 +42,7 @@ func main() {
 	var inRepoPath = flag.String("repo", "/7/os/x86_64", "Repo path to use in file list")
 	var outputFile = flag.String("output", "-", "Output for comparison result")
 	var showNew = flag.Bool("showAdded", false, "Display packages only in the new list")
+	var latestNew = flag.Bool("latestNew", false, "Consider only the latest package in the list of new packages")
 	var showOld = flag.Bool("showRemoved", false, "Display packages only in the old list")
 	var showCommon = flag.Bool("showCommon", false, "Display packages in both the new and old lists")
 	flag.Parse()
@@ -60,6 +62,25 @@ func main() {
 			newPackages = readFile(*newFile)
 		}
 	}
+
+	if *latestNew {
+		var packagesByName = make(map[string]Package)
+		for _, p := range newPackages {
+			if pn, ok := packagesByName[p.Name]; ok {
+				if pn.Time.Build < p.Time.Build {
+					packagesByName[p.Name] = p
+				}
+			} else {
+				packagesByName[p.Name] = p
+			}
+		}
+
+		newPackages = []Package{}
+		for _, p := range packagesByName {
+			newPackages = append(newPackages, p)
+		}
+	}
+
 	if _, isdir := isDirectory(*oldFile); *oldFile != "" {
 		if isdir {
 			oldRepomd := readRepomdFile(path.Join(*oldFile, "repomd.xml"))

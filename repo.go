@@ -44,6 +44,10 @@ type Package struct {
 		Text string `xml:",chardata"`
 		Href string `xml:"href,attr"`
 	} `xml:"location"`
+	Time struct {
+		File  int64 `xml:"file,attr"`
+		Build int64 `xml:"build,attr"`
+	} `xml:"time"`
 }
 
 type Metadata struct {

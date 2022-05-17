@@ -21,6 +21,11 @@ Using just a new file, this gives you a full list
 ./yum-package-diff -new output/ -old "" -showAdded -output filelist.txt
 ```
 
+Using latestNew will make sure that only the latest for every package is retrieved
+```bash
+./yum-package-diff -old "" -new microsoft/repodata -output microsoft/files.txt -showAdded -repo "7/prod" -latestNew
+```
+
 and the output looks like:
 ```
 $ ./yum-package-diff -new NewPrimary.xml.gz -old OldPrimary.xml -showAdded -output filelist.txt
