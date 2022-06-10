@@ -89,6 +89,8 @@ func readRepomdFile(repomdFile string) *Repomd {
 
 		defer resp.Body.Close()
 		file = resp.Body
+	} else {
+		log.Fatal("Could not open file:", repomdFile)
 	}
 
 	buf := new(bytes.Buffer)
