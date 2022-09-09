@@ -44,8 +44,8 @@ type Repomd struct {
 			Text string `xml:",chardata"`
 			Href string `xml:"href,attr"`
 		} `xml:"location"`
-		Timestamp    int `xml:"timestamp"`
-		Size         int `xml:"size"`
+		Timestamp    float64 `xml:"timestamp"`
+		Size         int     `xml:"size"`
 		OpenChecksum struct {
 			Text string `xml:",chardata"`
 			Type string `xml:"type,attr"`

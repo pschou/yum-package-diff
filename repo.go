@@ -45,8 +45,8 @@ type Package struct {
 		Href string `xml:"href,attr"`
 	} `xml:"location"`
 	Time struct {
-		File  int64 `xml:"file,attr"`
-		Build int64 `xml:"build,attr"`
+		File  float64 `xml:"file,attr"`
+		Build float64 `xml:"build,attr"`
 	} `xml:"time"`
 }
 
