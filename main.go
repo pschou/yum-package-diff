@@ -17,7 +17,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"path"
@@ -42,20 +41,29 @@ func main() {
 	var inRepoPath = flag.String("repo", "/7/os/x86_64", "Repo path to use in file list")
 	var outputFile = flag.String("output", "-", "Output for comparison result")
 	var showNew = flag.Bool("showAdded", false, "Display packages only in the new list")
-	var latestNew = flag.Bool("latestNew", false, "Consider only the latest package in the list of new packages")
+	//var latestNew = flag.Bool("latestNew", false, "Consider only the latest package in the list of new packages")
 	var showOld = flag.Bool("showRemoved", false, "Display packages only in the old list")
 	var showCommon = flag.Bool("showCommon", false, "Display packages in both the new and old lists")
 	flag.Parse()
 
-	var newPackages = []Package{}
-	var oldPackages = []Package{}
+	var newPackages = []Matchable{}
+	var oldPackages = []Matchable{}
+
 	if _, isdir := isDirectory(*newFile); *newFile != "" {
 		if isdir {
 			newRepomd := readRepomdFile(path.Join(*newFile, "repomd.xml"))
 			for _, d := range newRepomd.Data {
 				if d.Type == "primary" {
 					_, f := path.Split(d.Location.Href)
-					newPackages = readFile(path.Join(*newFile, f))
+					pkgs := readFile(path.Join(*newFile, f))
+					fmt.Println("Loaded", len(pkgs), "new packages")
+					newPackages = append(newPackages, pkgs...)
+				}
+				if d.Type == "prestodelta" {
+					_, f := path.Split(d.Location.Href)
+					pkgs := readDeltaFile(path.Join(*newFile, f))
+					fmt.Println("Loaded", len(pkgs), "new deltas")
+					newPackages = append(newPackages, pkgs...)
 				}
 			}
 		} else {
@@ -63,7 +71,7 @@ func main() {
 		}
 	}
 
-	if *latestNew {
+	/*if *latestNew {
 		var packagesByName = make(map[string]Package)
 		for _, p := range newPackages {
 			if pn, ok := packagesByName[p.Name]; ok {
@@ -79,7 +87,7 @@ func main() {
 		for _, p := range packagesByName {
 			newPackages = append(newPackages, p)
 		}
-	}
+	}*/
 
 	if _, isdir := isDirectory(*oldFile); *oldFile != "" {
 		if isdir {
@@ -87,7 +95,15 @@ func main() {
 			for _, d := range oldRepomd.Data {
 				if d.Type == "primary" {
 					_, f := path.Split(d.Location.Href)
-					oldPackages = readFile(path.Join(*oldFile, f))
+					pkgs := readFile(path.Join(*oldFile, f))
+					fmt.Println("Loaded", len(pkgs), "old packages")
+					oldPackages = append(oldPackages, pkgs...)
+				}
+				if d.Type == "prestodelta" {
+					_, f := path.Split(d.Location.Href)
+					pkgs := readDeltaFile(path.Join(*oldFile, f))
+					fmt.Println("Loaded", len(pkgs), "old deltas")
+					oldPackages = append(oldPackages, pkgs...)
 				}
 			}
 		} else {
@@ -113,10 +129,7 @@ matchups:
 	for iNew, pNew := range newPackages {
 		for iOld, pOld := range oldPackages {
 			//if reflect.DeepEqual(pNew, pOld) {
-			if pNew.Checksum.Text == pOld.Checksum.Text &&
-				pNew.Checksum.Type == pOld.Checksum.Type &&
-				pNew.Size.Package == pOld.Size.Package &&
-				pNew.Location.Href == pOld.Location.Href {
+			if pNew.matches(pOld) {
 				newMatched[iNew] = 1
 				oldMatched[iOld] = 1
 				continue matchups
@@ -131,21 +144,21 @@ matchups:
 	if *showNew {
 		for iNew, v := range newPackages {
 			if newMatched[iNew] == 0 {
-				totalSize += atoi(v.Size.Package)
+				totalSize += atoi(v.size())
 			}
 		}
 	}
 	if *showCommon {
 		for iNew, v := range newPackages {
 			if newMatched[iNew] == 1 {
-				totalSize += atoi(v.Size.Package)
+				totalSize += atoi(v.size())
 			}
 		}
 	}
 	if *showOld {
 		for iOld, v := range oldPackages {
 			if oldMatched[iOld] == 0 {
-				totalSize += atoi(v.Size.Package)
+				totalSize += atoi(v.size())
 			}
 		}
 	}
@@ -156,7 +169,7 @@ matchups:
 		for iNew, pNew := range newPackages {
 			if newMatched[iNew] == 0 {
 				// This package was not seen in OLD
-				printPackage(out, pNew)
+				pNew.print(out, repoPath)
 			}
 		}
 	}
@@ -165,7 +178,7 @@ matchups:
 		for iNew, pNew := range newPackages {
 			if newMatched[iNew] == 1 {
 				// This package was seen in BOTH
-				printPackage(out, pNew)
+				pNew.print(out, repoPath)
 			}
 		}
 	}
@@ -174,14 +187,10 @@ matchups:
 		for iOld, pOld := range oldPackages {
 			if oldMatched[iOld] == 0 {
 				// This package was not seen in NEW
-				printPackage(out, pOld)
+				pOld.print(out, repoPath)
 			}
 		}
 	}
-}
-
-func printPackage(out io.Writer, p Package) {
-	fmt.Fprintf(out, "{%s}%s %s %s\n", p.Checksum.Type, p.Checksum.Text, p.Size.Package, path.Join(repoPath, p.Location.Href))
 }
 
 func atoi(str string) uint64 {
