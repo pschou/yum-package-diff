@@ -23,6 +23,8 @@ import (
 	"log"
 	"os"
 	"path"
+
+	"github.com/ulikunitz/xz"
 )
 
 type Matchable interface {
@@ -42,27 +44,45 @@ func open(fileName string) (file io.Reader, closure func()) {
 	file = rawFile
 
 	// Detect magic number
-	b1 := make([]byte, 4)
-	n1, err := file.Read(b1)
+	//b1 := make([]byte, 4)
+	//n1, err := file.Read(b1)
 	_, err = rawFile.Seek(0, 0)
 
-	if n1 == 4 && string(b1) == "\x1f\x8b\x08\x00" {
-		//fmt.Println("Using gz decoder")
-		check(err)
+	comp := false
 
-		gz, err := gzip.NewReader(rawFile)
-		check(err)
+	if !comp {
+		xzfile, err := xz.NewReader(rawFile)
+		if err == nil {
+			// Make sure gzip handle is closed at the end of the function
+			closure = func() {
+				rawFile.Close()
+			}
 
-		// Make sure gzip handle is closed at the end of the function
-		closure = func() {
-			gz.Close()
-			rawFile.Close()
+			file = xzfile
+			comp = true
+		} else {
+			_, err = rawFile.Seek(0, 0)
 		}
+	}
+	if !comp {
+		gz, err := gzip.NewReader(rawFile)
+		if err == nil {
 
-		// Substitute the gz reader in the place of file to handle the compressed file
-		file = gz
-	} else {
-		bufReader := bufio.NewReaderSize(file, 100000)
+			// Make sure gzip handle is closed at the end of the function
+			closure = func() {
+				gz.Close()
+				rawFile.Close()
+			}
+
+			// Substitute the gz reader in the place of file to handle the compressed file
+			file = gz
+			comp = true
+		} else {
+			_, err = rawFile.Seek(0, 0)
+		}
+	}
+	if !comp {
+		bufReader := bufio.NewReaderSize(rawFile, 100000)
 		file = bufReader
 		// Make sure the file is closed
 		closure = func() {
