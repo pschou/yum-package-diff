@@ -41,9 +41,9 @@ func main() {
 	var inRepoPath = flag.String("repo", "/7/os/x86_64", "Repo path to use in file list")
 	var outputFile = flag.String("output", "-", "Output for comparison result")
 	var showNew = flag.Bool("showAdded", false, "Display packages only in the new list")
-	//var latestNew = flag.Bool("latestNew", false, "Consider only the latest package in the list of new packages")
 	var showOld = flag.Bool("showRemoved", false, "Display packages only in the old list")
 	var showCommon = flag.Bool("showCommon", false, "Display packages in both the new and old lists")
+
 	flag.Parse()
 
 	var newPackages = []Matchable{}
@@ -52,17 +52,21 @@ func main() {
 	if _, isdir := isDirectory(*newFile); *newFile != "" {
 		if isdir {
 			newRepomd := readRepomdFile(path.Join(*newFile, "repomd.xml"))
+			if newRepomd == nil {
+				fmt.Println("Error reading in repomd.xml file, check that the file is a valid repomd.xml or the path is correct")
+				return
+			}
 			for _, d := range newRepomd.Data {
 				if d.Type == "primary" {
 					_, f := path.Split(d.Location.Href)
 					pkgs := readFile(path.Join(*newFile, f))
-					fmt.Println("Loaded", len(pkgs), "new packages")
+					fmt.Println("# Loaded", len(pkgs), "new packages")
 					newPackages = append(newPackages, pkgs...)
 				}
 				if d.Type == "prestodelta" {
 					_, f := path.Split(d.Location.Href)
 					pkgs := readDeltaFile(path.Join(*newFile, f))
-					fmt.Println("Loaded", len(pkgs), "new deltas")
+					fmt.Println("# Loaded", len(pkgs), "new deltas")
 					newPackages = append(newPackages, pkgs...)
 				}
 			}
@@ -96,13 +100,13 @@ func main() {
 				if d.Type == "primary" {
 					_, f := path.Split(d.Location.Href)
 					pkgs := readFile(path.Join(*oldFile, f))
-					fmt.Println("Loaded", len(pkgs), "old packages")
+					fmt.Println("# Loaded", len(pkgs), "old packages")
 					oldPackages = append(oldPackages, pkgs...)
 				}
 				if d.Type == "prestodelta" {
 					_, f := path.Split(d.Location.Href)
 					pkgs := readDeltaFile(path.Join(*oldFile, f))
-					fmt.Println("Loaded", len(pkgs), "old deltas")
+					fmt.Println("# Loaded", len(pkgs), "old deltas")
 					oldPackages = append(oldPackages, pkgs...)
 				}
 			}
